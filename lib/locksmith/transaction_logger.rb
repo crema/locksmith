@@ -34,7 +34,7 @@ module Locksmith
       @stack ||= []
     end
 
-    attr_reader :checkers, :begin_callstack, :queries
+    attr_reader :checkers, :backtrace, :queries
 
     def initialize
       @checkers = [ RecordLockChecker.new, TransactionChecker.new ]
@@ -42,7 +42,7 @@ module Locksmith
     end
 
     def begin
-      @begin_callstack = caller.select{|s| !s.include?('lib/locksmith/')}
+      @backtrace = caller.select{|s| !s.include?('lib/locksmith/')}
       @checkers.each do |checker|
         checker.send(:begin) if checker.respond_to?(:begin)
       end
