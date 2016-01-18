@@ -53,6 +53,7 @@ module Locksmith
     end
 
     def commit
+      execute('COMMIT', nil)
       @checkers.each do |checker|
         checker.send(:commit) if checker.respond_to?(:commit)
       end
@@ -66,6 +67,7 @@ module Locksmith
     end
 
     def rollback
+      execute('ROLLBACK', nil)
       @checkers.each do |checker|
         checker.send(:rollback) if checker.respond_to?(:rollback)
       end
