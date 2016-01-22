@@ -28,7 +28,9 @@ module Locksmith
       table_name = record.class.table_name
       return foreign_keys_table[table_name] if foreign_keys_table.has_key?(table_name)
 
-      foreign_keys_table[table_name] = record.class.reflect_on_all_associations(:belongs_to).map {|a| ForeignKey.new(a.table_name, a.foreign_key)}
+      associations = record.class.reflect_on_all_associations(:belongs_to)
+      associations = associations.reject {|a| a.options[:polymorphic]}
+      foreign_keys_table[table_name] = associations.map {|a| ForeignKey.new(a.table_name, a.foreign_key)}
     end
 
     def add_s_locks_for_foreign_key(record)
