@@ -1,7 +1,7 @@
 module Locksmith
   class RecordLockChecker
     RecordLock = Struct.new(:table_name, :primary_key, :mode)
-    ForeignKey = Struct.new(:table_name, :foreign_key)
+    ForeignKey = Struct.new(:table_name, :foreign_key, :name)
 
     attr_reader :locks, :foreign_keys_table, :invalid_order_locks
 
@@ -23,10 +23,9 @@ module Locksmith
 
     private
 
-
     def foreign_keys(record)
       table_name = record.class.table_name
-      return foreign_keys_table[table_name] if foreign_keys_table.has_key?(table_name)
+      return foreign_keys_table[table_name] if foreign_keys_table.key?(table_name)
 
       associations = record.class.reflect_on_all_associations(:belongs_to)
       associations = associations.select do |a|
@@ -36,11 +35,18 @@ module Locksmith
           false
         end
       end
-      foreign_keys_table[table_name] = associations.map {|a| ForeignKey.new(a.table_name, a.foreign_key)}
+      foreign_keys_table[table_name] = associations.map do |a|
+        ForeignKey.new(
+          a.table_name,
+          a.foreign_key,
+          a.name
+        )
+      end
     end
 
     def add_s_locks_for_foreign_key(record)
       foreign_keys(record).each do |foreign_key|
+        next if record.association(foreign_key.name).loaded?
         foreign_key_value = record[foreign_key.foreign_key]
         add_lock(foreign_key.table_name, foreign_key_value, :s)
       end
